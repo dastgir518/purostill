@@ -24,8 +24,8 @@ COPY . .
 # Build the application
 ARG WORDPRESS_GRAPHQL_URL
 ARG WOOCOMMERCE_URL
-ENV WORDPRESS_GRAPHQL_URL=$WORDPRESS_GRAPHQL_URL
-ENV WOOCOMMERCE_URL=$WOOCOMMERCE_URL
+ENV WORDPRESS_GRAPHQL_URL="https://backend-ps.purostill.com/graphql"
+ENV WOOCOMMERCE_URL="https://backend-ps.purostill.com"
 
 RUN npm run build
 

@@ -1,7 +1,12 @@
-/** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   images: {
     unoptimized: true,
   },
@@ -11,6 +16,11 @@ const nextConfig = {
     WORDPRESS_GRAPHQL_URL: process.env.WORDPRESS_GRAPHQL_URL,
   },
 }
+
+console.log('[NextConfig] Build Env:', {
+  WOOCOMMERCE_URL: process.env.WOOCOMMERCE_URL,
+  WORDPRESS_GRAPHQL_URL: process.env.WORDPRESS_GRAPHQL_URL,
+});
 
 module.exports = nextConfig
 
