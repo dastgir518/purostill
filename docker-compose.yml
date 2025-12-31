@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  purostill-frontend:
+    container_name: purostill-frontend
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - WORDPRESS_GRAPHQL_URL=https://backend-ps.purostill.com/graphql
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
