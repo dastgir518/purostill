@@ -6,6 +6,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        WORDPRESS_GRAPHQL_URL: https://backend-ps.purostill.com/graphql
+        WOOCOMMERCE_URL: https://backend-ps.purostill.com
     restart: always
     ports:
       - "3000:3000"
