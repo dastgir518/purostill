@@ -1,0 +1,13 @@
+{
+    email contact@purostill.com
+}
+
+purostill.com {
+    reverse_proxy purostill-frontend:3000
+    encode zstd gzip
+}
+
+www.purostill.com {
+    reverse_proxy purostill-frontend:3000
+    encode zstd gzip
+}
