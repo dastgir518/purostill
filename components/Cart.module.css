@@ -1,0 +1,280 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.cartSidebar {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 100%;
+  max-width: 420px;
+  height: 95vh;
+  max-height: 95vh;
+  background: #fff;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  transition: right 0.3s ease;
+  overflow: hidden;
+}
+
+@media (min-width: 641px) {
+  .cartSidebar {
+    height: 100vh;
+    max-height: 100vh;
+  }
+}
+
+.cartSidebar.open {
+  right: 0;
+}
+
+.cartHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.cartTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.3s ease;
+}
+
+.closeButton:hover {
+  color: #2c3e50;
+}
+
+.cartItems {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.emptyCart {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #666;
+  font-size: 1rem;
+}
+
+.cartItem {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.cartItem:last-child {
+  border-bottom: none;
+}
+
+.itemImage {
+  flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #f8f9fa;
+}
+
+.productImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.itemDetails {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.itemName {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.itemPrice {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.itemActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.quantitySelector {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.quantityButton {
+  background: #f8f9fa;
+  border: none;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: #2c3e50;
+  transition: background-color 0.3s ease;
+}
+
+.quantityButton:hover {
+  background: #e9ecef;
+}
+
+.quantityValue {
+  width: 40px;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #2c3e50;
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  padding: 0.5rem 0;
+}
+
+.removeButton {
+  background: none;
+  border: none;
+  color: #e74c3c;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  transition: color 0.3s ease;
+}
+
+.removeButton:hover {
+  color: #c0392b;
+  text-decoration: underline;
+}
+
+.cartSummary {
+  padding: 1.5rem;
+  border-top: 1px solid #e0e0e0;
+  background: #fff;
+}
+
+.cartTotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.totalLabel {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.totalAmount {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.checkoutButton {
+  width: 100%;
+  padding: 1rem;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.checkoutButton:hover {
+  background: #2980b9;
+}
+
+.checkoutButton:active {
+  transform: scale(0.98);
+}
+
+.continueShoppingButton {
+  width: 100%;
+  padding: 1rem;
+  background: transparent;
+  color: #2c3e50;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 0.75rem;
+}
+
+.continueShoppingButton:hover {
+  background: #f8f9fa;
+  border-color: #2c3e50;
+  color: #2c3e50;
+}
+
+.continueShoppingButton:active {
+  transform: scale(0.98);
+}
+
+@media (max-width: 768px) {
+  .cartSidebar {
+    max-width: 100%;
+  }
+}
+

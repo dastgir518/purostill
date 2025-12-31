@@ -1,0 +1,382 @@
+.page {
+  min-height: 100vh;
+  background: #f8fbfd;
+}
+
+.main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+@media (min-width: 641px) {
+  .main {
+    padding: 2rem 1.5rem 4rem;
+  }
+}
+
+.hero {
+  border-radius: 24px;
+  padding: 3rem;
+  background: linear-gradient(135deg, #072c3d, #0b4a63);
+  color: #fff;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  align-items: center;
+}
+
+.hero h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  margin: 0 0 1rem;
+}
+
+.hero p {
+  margin: 0;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.founderQuote {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.founderQuote span {
+  display: block;
+  margin-top: 0.75rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.statCard {
+  background: #fff;
+  border-radius: 18px;
+  padding: 1.5rem;
+  box-shadow: 0 12px 40px rgba(6, 27, 45, 0.06);
+  text-align: center;
+}
+
+.statValue {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #0f6b89;
+}
+
+.statLabel {
+  margin-top: 0.5rem;
+  color: #54636f;
+  font-size: 0.95rem;
+}
+
+.sectionHeading {
+  margin-bottom: 1.25rem;
+}
+
+.sectionHeading h2 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #072c3d;
+}
+
+.sectionHeading p {
+  margin: 0.5rem 0 0;
+  color: #5a6b76;
+  max-width: 640px;
+}
+
+.storySplit {
+  display: grid;
+  grid-template-columns: minmax(300px, 1fr) 360px;
+  gap: 2rem;
+  align-items: center;
+}
+
+.storyCopy p {
+  margin: 0.35rem 0;
+  color: #5a6b76;
+  line-height: 1.6;
+}
+
+.storyImageWrapper {
+  width: 100%;
+  max-width: 420px;
+  justify-self: end;
+}
+
+.storyImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 18px;
+  box-shadow: 0 18px 45px rgba(12, 42, 65, 0.12);
+  border: 1px solid rgba(15, 59, 79, 0.08);
+  background: #e9f5fb;
+}
+
+.storyGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+.card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 18px 45px rgba(12, 42, 65, 0.08);
+}
+
+.valuesList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.valueItem h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.1rem;
+  color: #0f3a4f;
+}
+
+.valueItem p {
+  margin: 0;
+  color: #5f6b75;
+  line-height: 1.5;
+}
+
+.timeline {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 0.6rem;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, #58c4ec, rgba(88, 196, 236, 0.2));
+}
+
+.timelineItem {
+  position: relative;
+  padding: 0 0 1.5rem 1rem;
+}
+
+.timelineItem:last-child {
+  padding-bottom: 0;
+}
+
+.timelineItem::before {
+  content: '';
+  position: absolute;
+  left: -1.6rem;
+  top: 0.2rem;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  background: #2badee;
+  box-shadow: 0 0 0 4px rgba(43, 173, 238, 0.2);
+}
+
+.timelineYear {
+  font-weight: 700;
+  color: #0f6b89;
+  margin-bottom: 0.25rem;
+}
+
+.timelineItem h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.15rem;
+}
+
+.timelineItem p {
+  margin: 0;
+  color: #576572;
+  line-height: 1.5;
+}
+
+.teamGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.teamCard {
+  text-align: center;
+  padding: 1.5rem;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 15px 35px rgba(9, 30, 46, 0.08);
+}
+
+.teamAvatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  margin: 0 auto 1rem;
+  object-fit: cover;
+  border: 3px solid rgba(43, 173, 238, 0.3);
+}
+
+.teamCard h3 {
+  margin: 0;
+  color: #0f3a4f;
+}
+
+.teamRole {
+  margin: 0.25rem 0 0.5rem;
+  color: #648190;
+  font-size: 0.95rem;
+}
+
+.teamBlurb {
+  margin: 0;
+  color: #5d6874;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.impactGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem;
+}
+
+.impactCard {
+  background: #fff;
+  border-radius: 18px;
+  padding: 1.5rem;
+  border: 1px solid rgba(15, 59, 79, 0.08);
+}
+
+.impactCard h3 {
+  margin: 0 0 0.5rem;
+  color: #0f3a4f;
+}
+
+.impactCard p {
+  margin: 0;
+  color: #5a6b76;
+  line-height: 1.45;
+}
+
+.cta {
+  border-radius: 24px;
+  padding: 3rem;
+  background: #fff;
+  text-align: center;
+  box-shadow: 0 35px 60px rgba(9, 41, 63, 0.08);
+}
+
+.cta h2 {
+  margin: 0 0 0.75rem;
+  font-size: 2rem;
+  color: #072c3d;
+}
+
+.cta p {
+  margin: 0 0 1.5rem;
+  color: #5a6b76;
+  font-size: 1.05rem;
+}
+
+.ctaButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.9rem 1.75rem;
+  border-radius: 999px;
+  border: none;
+  outline: none;
+  background: linear-gradient(135deg, #11a5dd, #2bd3c2);
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 10px 25px rgba(17, 165, 221, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ctaButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 30px rgba(17, 165, 221, 0.4);
+}
+
+.socialSection {
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.socialSection h3 {
+  margin: 0 0 1.5rem;
+  color: #072c3d;
+  font-size: 1.5rem;
+}
+
+.socialLinks {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.socialLinks a {
+  color: #4c809a;
+  transition: color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.socialLinks a:hover {
+  color: #2badee;
+}
+
+.socialLinks svg {
+  width: 32px;
+  height: 32px;
+}
+
+@media (max-width: 640px) {
+  .hero,
+  .cta {
+    padding: 2rem;
+  }
+
+  .main {
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  .timeline {
+    padding-left: 1.5rem;
+  }
+
+  .storySplit {
+    grid-template-columns: 1fr;
+  }
+
+  .storyImageWrapper {
+    justify-self: start;
+    max-width: none;
+  }
+}
+
