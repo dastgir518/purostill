@@ -27,6 +27,7 @@ ARG WOOCOMMERCE_URL
 ENV WORDPRESS_GRAPHQL_URL="https://backend-ps.purostill.com/graphql"
 ENV WOOCOMMERCE_URL="https://backend-ps.purostill.com"
 
+RUN ls -la lib/ components/
 RUN npm run build
 
 # Production image, copy all the files and run next
