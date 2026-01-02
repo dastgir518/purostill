@@ -26,6 +26,8 @@ ARG WORDPRESS_GRAPHQL_URL
 ARG WOOCOMMERCE_URL
 ENV WORDPRESS_GRAPHQL_URL="https://backend-ps.purostill.com/graphql"
 ENV WOOCOMMERCE_URL="https://backend-ps.purostill.com"
+ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_live_51KFlmQFxErB4qQFItKczw4cyNWGAZoSAk0AC1Pmlvjn9PNTCnVW3BgidxAtMEYqHReFsoBuGma2AVIEzEGFioPLF00tiax7bgV"
+ENV STRIPE_SECRET_KEY="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"
 
 RUN ls -la lib/ components/
 RUN npm run build
