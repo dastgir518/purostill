@@ -7,6 +7,7 @@ import styles from './product.module.css';
 import { SkeletonProductPage, Skeleton, SkeletonText } from '@/components/Skeleton';
 import { decodeHtmlEntities } from '@/lib/utils';
 import PaymentModal from '@/components/Checkout/PaymentModal';
+import InlineCheckout from '@/components/Checkout/InlineCheckout';
 
 interface Product {
     id: number;
@@ -484,6 +485,14 @@ export default function ProductPageClient({ initialProduct, slug: initialSlug }:
                         >
                             Buy Now
                         </button>
+                    </div>
+
+                    {/* Inline Express Checkout (Google Pay / Apple Pay) */}
+                    <div className={styles.expressCheckoutSection}>
+                        <InlineCheckout
+                            amount={(parseFloat(product.price || product.sale_price || product.regular_price || '0') * quantity)}
+                            currency="GBP"
+                        />
                     </div>
                 </div>
             </div>
