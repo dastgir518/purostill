@@ -6,7 +6,7 @@ import Link from 'next/link';
 import styles from './product.module.css';
 import { SkeletonProductPage, Skeleton, SkeletonText } from '@/components/Skeleton';
 import { decodeHtmlEntities } from '@/lib/utils';
-import PaymentModal from '@/components/Checkout/PaymentModal';
+
 import InlineCheckout from '@/components/Checkout/InlineCheckout';
 
 interface Product {
@@ -149,7 +149,6 @@ export default function ProductPageClient({ initialProduct, slug: initialSlug }:
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [quantity, setQuantity] = useState(1);
     const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'reviews'>('description');
-    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
     // Update slug and product when pathname changes (if navigating between products)
     useEffect(() => {
@@ -280,9 +279,7 @@ export default function ProductPageClient({ initialProduct, slug: initialSlug }:
         }, quantity);
     };
 
-    const handleBuyNow = () => {
-        setIsPaymentModalOpen(true);
-    };
+
 
     if (loading) {
         return <SkeletonProductPage />;
@@ -468,23 +465,7 @@ export default function ProductPageClient({ initialProduct, slug: initialSlug }:
                         >
                             Add to Cart
                         </button>
-                        <button
-                            className={styles.buyNowButton}
-                            onClick={handleBuyNow}
-                            style={{
-                                backgroundColor: '#000',
-                                color: '#fff',
-                                border: 'none',
-                                borderRadius: '4px',
-                                padding: '12px 24px',
-                                fontSize: '1rem',
-                                fontWeight: '600',
-                                marginLeft: '10px',
-                                cursor: 'pointer',
-                            }}
-                        >
-                            Buy Now
-                        </button>
+
                     </div>
 
                     {/* Inline Express Checkout (Google Pay / Apple Pay) */}
@@ -637,13 +618,7 @@ export default function ProductPageClient({ initialProduct, slug: initialSlug }:
                 </div>
             </div>
 
-            {/* Payment Modal */}
-            <PaymentModal
-                isOpen={isPaymentModalOpen}
-                onClose={() => setIsPaymentModalOpen(false)}
-                amount={(parseFloat(product.price || product.sale_price || product.regular_price || '0') * quantity)}
-                currency="GBP"
-            />
+
         </div>
     );
 }
