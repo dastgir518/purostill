@@ -112,7 +112,6 @@ const testimonials = [
 
 
 import { getPublicProducts, getPublicTags } from '@/lib/woocommerce';
-import { getPageSeo, SeoData } from '@/lib/graphql';
 
 async function getBestsellers() {
   try {
@@ -146,33 +145,27 @@ async function getBestsellers() {
   }
 }
 
-export async function generateMetadata(): Promise<Metadata> {
-  const seoData: SeoData = await getPageSeo('/');
-  console.log('[SEO] Fetching metadata for Home Page:', JSON.stringify(seoData, null, 2));
+import { getPostSeo } from '@/lib/public-api';
 
-  if (seoData) {
+export async function generateMetadata(): Promise<Metadata> {
+  const seoData = await getPostSeo('page', 156).catch(() => null);
+
+  if (seoData?.seo_meta) {
     return {
-      title: seoData.title,
-      description: seoData.metaDesc,
+      title: seoData.seo_meta.meta_title,
+      description: seoData.seo_meta.meta_description,
       openGraph: {
-        title: seoData.opengraphTitle || seoData.title,
-        description: seoData.opengraphDescription || seoData.metaDesc,
-        images: seoData.opengraphImage ? [{ url: seoData.opengraphImage.sourceUrl }] : [],
-        url: seoData.canonical,
+        title: seoData.seo_meta.meta_title,
+        description: seoData.seo_meta.meta_description,
+        images: seoData.seo_meta.og_image ? [{ url: seoData.seo_meta.og_image }] : undefined,
       },
-      twitter: {
-        card: 'summary_large_image',
-        title: seoData.twitterTitle || seoData.title,
-        description: seoData.twitterDescription || seoData.metaDesc,
-        images: seoData.twitterImage ? [seoData.twitterImage.sourceUrl] : [],
-      },
-      alternates: {
-        canonical: seoData.canonical,
-      },
+      robots: {
+        index: !seoData.seo_meta.noindex,
+        follow: true, // Assuming follow unless specified, API only shows noindex boolean in example
+      }
     };
   }
 
-  // Fallback if GraphQL fails
   return {
     title: 'Purostill - Premium Water Distillers',
     description: 'Discover the purest water with Purostill water distillers.',
@@ -180,23 +173,23 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Home() {
-  const [categoryMenuItems, bestsellers] = await Promise.all([
+  const [categoryMenuItems, bestsellers, seoData] = await Promise.all([
     fetchCategoryMenuItems(),
     getBestsellers(),
+    getPostSeo('page', 156).catch(() => null),
   ]);
 
-  const seoData: SeoData = await getPageSeo('/');
   const categoryItems = categoryMenuItems.length > 0 ? categoryMenuItems : fallbackCategoryItems;
 
   return (
     <div className={styles.page}>
+      {seoData?.schema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(seoData.schema) }}
+        />
+      )}
       <main className={styles.main}>
-        {seoData?.schema?.raw && (
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: seoData.schema.raw }}
-          />
-        )}
         <section
           className={styles.hero}
           style={{
@@ -252,7 +245,7 @@ export default async function Home() {
               <div className={styles.sectionHeading}>
                 <h2>Why Choose PurOstill?</h2>
                 <p>
-                  Your health and peace of mind come first. Every PurOstill system is built to deliver consistent purity, backed by rigorous testing and long-term support.
+                  Your health and peace of mind come first. Every PurOstill Product is built to deliver consistent purity, backed by rigorous testing and long-term support.
                 </p>
               </div>
               <div className={styles.whyChoosePoints}>

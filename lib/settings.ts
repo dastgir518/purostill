@@ -11,12 +11,13 @@ const WOOCOMMERCE_URL =
  */
 export async function getSettings(): Promise<any> {
   const url = `${WOOCOMMERCE_URL}/wp-json/custom/v1/settings`;
-  
+
   try {
     const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
       },
+      cache: 'no-store',
     });
 
     if (!response.ok) {

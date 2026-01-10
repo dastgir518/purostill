@@ -14,13 +14,22 @@ export default function CachePurgePage() {
   const handlePurge = async () => {
     setLoading(true);
     setStatus(null);
-    
+
     try {
-      // Note: Cache purge is not available in static export
-      // This functionality requires a server-side endpoint
+      const response = await fetch('/api/revalidate', {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to purge cache');
+      }
+
       setStatus({
-        success: false,
-        message: 'Cache purge is not available in static build. Please use WordPress admin or hosting control panel.',
+        success: true,
+        message: 'Cache purged successfully! All pages will be refreshed on next visit.',
+        timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
       setStatus({
@@ -33,16 +42,16 @@ export default function CachePurgePage() {
   };
 
   return (
-    <div style={{ 
-      maxWidth: '800px', 
-      margin: '3rem auto', 
+    <div style={{
+      maxWidth: '800px',
+      margin: '3rem auto',
       padding: '2rem',
       fontFamily: 'var(--font-poppins), sans-serif'
     }}>
       <h1 style={{ marginBottom: '1rem', color: '#2c3e50' }}>Cache Purge</h1>
-      
+
       <p style={{ marginBottom: '2rem', color: '#666' }}>
-        This page allows you to manually purge all cached data. Caches are automatically 
+        This page allows you to manually purge all cached data. Caches are automatically
         refreshed every 24 hours, but you can force an immediate refresh here.
       </p>
 
@@ -83,10 +92,10 @@ export default function CachePurgePage() {
       )}
 
       <div style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid #e0e0e0' }}>
-        <Link 
-          href="/" 
-          style={{ 
-            color: '#3498db', 
+        <Link
+          href="/"
+          style={{
+            color: '#3498db',
             textDecoration: 'none',
             fontWeight: 500,
           }}

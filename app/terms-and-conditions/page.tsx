@@ -1,7 +1,7 @@
 import styles from './page.module.css';
 import { decodeHtmlEntities } from '@/lib/utils';
 import { Metadata } from 'next';
-import { getPageSeoById, SeoData } from '@/lib/graphql';
+import { getPostSeo } from '@/lib/public-api';
 
 const PAGE_ID = 1268;
 const WP_URL = process.env.WOOCOMMERCE_URL ?? 'https://test.purostill.com';
@@ -32,27 +32,21 @@ async function fetchWordPressPage(pageId: number): Promise<WordPressPage | null>
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const seoData: SeoData = await getPageSeoById(PAGE_ID);
+  const seoData = await getPostSeo('page', PAGE_ID).catch(() => null);
 
-  if (seoData) {
+  if (seoData?.seo_meta) {
     return {
-      title: seoData.title,
-      description: seoData.metaDesc,
+      title: seoData.seo_meta.meta_title,
+      description: seoData.seo_meta.meta_description,
       openGraph: {
-        title: seoData.opengraphTitle || seoData.title,
-        description: seoData.opengraphDescription || seoData.metaDesc,
-        images: seoData.opengraphImage ? [{ url: seoData.opengraphImage.sourceUrl }] : [],
-        url: seoData.canonical,
+        title: seoData.seo_meta.meta_title,
+        description: seoData.seo_meta.meta_description,
+        images: seoData.seo_meta.og_image ? [{ url: seoData.seo_meta.og_image }] : undefined,
       },
-      twitter: {
-        card: 'summary_large_image',
-        title: seoData.twitterTitle || seoData.title,
-        description: seoData.twitterDescription || seoData.metaDesc,
-        images: seoData.twitterImage ? [seoData.twitterImage.sourceUrl] : [],
-      },
-      alternates: {
-        canonical: seoData.canonical,
-      },
+      robots: {
+        index: !seoData.seo_meta.noindex,
+        follow: true,
+      }
     };
   }
 
@@ -64,7 +58,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function TermsAndConditionsPage() {
   const [page, seoData] = await Promise.all([
     fetchWordPressPage(PAGE_ID),
-    getPageSeoById(PAGE_ID) as Promise<SeoData>
+    getPostSeo('page', PAGE_ID).catch(() => null),
   ]);
 
   const title = decodeHtmlEntities(page?.title?.rendered || 'Terms & Conditions');
@@ -73,13 +67,14 @@ export default async function TermsAndConditionsPage() {
 
   return (
     <div className={styles.page}>
+      {seoData?.schema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(seoData.schema) }}
+        />
+      )}
       <article className={styles.container}>
-        {seoData?.schema?.raw && (
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: seoData.schema.raw }}
-          />
-        )}
+
         <header className={styles.header}>
           <p className={styles.eyebrow}>Legal</p>
           <h1 className={styles.title}>{title}</h1>

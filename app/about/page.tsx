@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import styles from './page.module.css';
 import { Metadata } from 'next';
-import { getPageSeoById, SeoData } from '@/lib/graphql';
+import { getMenu } from '@/lib/menu';
+import { decodeHtmlEntities } from '@/lib/utils';
+import { getPostSeo } from '@/lib/public-api';
 
 const PAGE_ID = 3203;
 export const revalidate = 86400;
@@ -50,10 +52,7 @@ const productCategories = [
     title: 'Accessories',
     description: 'Practical add-ons and spare parts that protect and enhance your setup.',
   },
-  {
-    title: 'Smart Hydration Essentials',
-    description: 'Everyday pieces that make it easier to drink more and drink better.',
-  },
+
 ];
 
 const lookingAheadGoals = [
@@ -63,28 +62,41 @@ const lookingAheadGoals = [
   'Make pure water an effortless part of everyday life',
 ];
 
-export async function generateMetadata(): Promise<Metadata> {
-  const seoData: SeoData = await getPageSeoById(PAGE_ID);
+function normalizeMenuUrl(url?: string) {
+  if (!url) return '#';
+  if (url.startsWith('/')) return url;
 
-  if (seoData) {
+  try {
+    const parsed = new URL(url);
+    const path = parsed.pathname || '/';
+    const query = parsed.search || '';
+    const hash = parsed.hash || '';
+    return `${path}${query}${hash}` || '/';
+  } catch {
+    const pathMatch = url.match(/^https?:\/\/[^/]+(\/.*)$/);
+    if (pathMatch) {
+      return pathMatch[1] || '/';
+    }
+    return url;
+  }
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const seoData = await getPostSeo('page', PAGE_ID).catch(() => null);
+
+  if (seoData?.seo_meta) {
     return {
-      title: seoData.title,
-      description: seoData.metaDesc,
+      title: seoData.seo_meta.meta_title,
+      description: seoData.seo_meta.meta_description,
       openGraph: {
-        title: seoData.opengraphTitle || seoData.title,
-        description: seoData.opengraphDescription || seoData.metaDesc,
-        images: seoData.opengraphImage ? [{ url: seoData.opengraphImage.sourceUrl }] : [],
-        url: seoData.canonical,
+        title: seoData.seo_meta.meta_title,
+        description: seoData.seo_meta.meta_description,
+        images: seoData.seo_meta.og_image ? [{ url: seoData.seo_meta.og_image }] : undefined,
       },
-      twitter: {
-        card: 'summary_large_image',
-        title: seoData.twitterTitle || seoData.title,
-        description: seoData.twitterDescription || seoData.metaDesc,
-        images: seoData.twitterImage ? [seoData.twitterImage.sourceUrl] : [],
-      },
-      alternates: {
-        canonical: seoData.canonical,
-      },
+      robots: {
+        index: !seoData.seo_meta.noindex,
+        follow: true,
+      }
     };
   }
 
@@ -95,14 +107,28 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AboutPage() {
-  const seoData: SeoData = await getPageSeoById(PAGE_ID);
+  const [menu, seoData] = await Promise.all([
+    getMenu(108).catch(() => ({ items: [] })),
+    getPostSeo('page', PAGE_ID).catch(() => null),
+  ]);
+
+  const linkMap = new Map<string, string>();
+  if (menu && menu.items) {
+    menu.items.forEach((item: any) => {
+      if (item.title) {
+        // Normalized title for matching: lower case, decoded entities
+        const title = decodeHtmlEntities(item.title).toLowerCase().trim();
+        linkMap.set(title, item.url);
+      }
+    });
+  }
 
   return (
     <div className={styles.page}>
-      {seoData?.schema?.raw && (
+      {seoData?.schema && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: seoData.schema.raw }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(seoData.schema) }}
         />
       )}
       <main className={styles.main}>
@@ -157,12 +183,26 @@ export default async function AboutPage() {
             </p>
           </div>
           <div className={styles.impactGrid}>
-            {productCategories.map((category) => (
-              <div key={category.title} className={styles.impactCard}>
-                <h3>{category.title}</h3>
-                <p>{category.description}</p>
-              </div>
-            ))}
+            {productCategories.map((category) => {
+              const menuUrl = linkMap.get(category.title.toLowerCase().trim());
+              const href = menuUrl ? normalizeMenuUrl(menuUrl) : null;
+
+              if (href) {
+                return (
+                  <Link href={href} key={category.title} className={styles.impactCard}>
+                    <h3>{category.title}</h3>
+                    <p>{category.description}</p>
+                  </Link>
+                );
+              }
+
+              return (
+                <div key={category.title} className={styles.impactCard}>
+                  <h3>{category.title}</h3>
+                  <p>{category.description}</p>
+                </div>
+              );
+            })}
           </div>
           <p style={{ marginTop: '1.5rem', color: '#5a6b76' }}>
             Whether you&apos;re just starting with your first system or upgrading a full household setup, PurOstill is designed to grow with you.

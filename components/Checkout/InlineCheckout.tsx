@@ -59,7 +59,7 @@ const ExpressCheckoutWrapper = ({ amount, currency }: { amount: number, currency
                 onConfirm={onConfirm}
                 onReady={({ availablePaymentMethods }) => {
                     console.log('Express Checkout Ready. Available methods:', availablePaymentMethods);
-                    if (!availablePaymentMethods.google_pay) {
+                    if (availablePaymentMethods && !availablePaymentMethods.google_pay) {
                         console.warn('Google Pay not available. Reason: Browser support or HTTPS check failed?');
                     }
                 }}

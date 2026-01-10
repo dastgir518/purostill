@@ -1,32 +1,26 @@
 import { Metadata } from 'next';
-import { getPageSeoById, SeoData } from '@/lib/graphql';
 import ContactPageClient from './ContactPageClient';
+import { getPostSeo } from '@/lib/public-api';
 
 const PAGE_ID = 3205;
 export const revalidate = 86400;
 
 export async function generateMetadata(): Promise<Metadata> {
-  const seoData: SeoData = await getPageSeoById(PAGE_ID);
+  const seoData = await getPostSeo('page', PAGE_ID).catch(() => null);
 
-  if (seoData) {
+  if (seoData?.seo_meta) {
     return {
-      title: seoData.title,
-      description: seoData.metaDesc,
+      title: seoData.seo_meta.meta_title,
+      description: seoData.seo_meta.meta_description,
       openGraph: {
-        title: seoData.opengraphTitle || seoData.title,
-        description: seoData.opengraphDescription || seoData.metaDesc,
-        images: seoData.opengraphImage ? [{ url: seoData.opengraphImage.sourceUrl }] : [],
-        url: seoData.canonical,
+        title: seoData.seo_meta.meta_title,
+        description: seoData.seo_meta.meta_description,
+        images: seoData.seo_meta.og_image ? [{ url: seoData.seo_meta.og_image }] : undefined,
       },
-      twitter: {
-        card: 'summary_large_image',
-        title: seoData.twitterTitle || seoData.title,
-        description: seoData.twitterDescription || seoData.metaDesc,
-        images: seoData.twitterImage ? [seoData.twitterImage.sourceUrl] : [],
-      },
-      alternates: {
-        canonical: seoData.canonical,
-      },
+      robots: {
+        index: !seoData.seo_meta.noindex,
+        follow: true,
+      }
     };
   }
 
@@ -36,14 +30,14 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ContactPage() {
-  const seoData: SeoData = await getPageSeoById(PAGE_ID);
+  const seoData = await getPostSeo('page', PAGE_ID).catch(() => null);
 
   return (
     <>
-      {seoData?.schema?.raw && (
+      {seoData?.schema && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: seoData.schema.raw }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(seoData.schema) }}
         />
       )}
       <ContactPageClient />

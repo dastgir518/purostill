@@ -19,7 +19,7 @@ const policyLinks = [
 function normalizeMenuUrl(url?: string) {
   if (!url) return '#';
   if (url.startsWith('/')) return url;
-  
+
   try {
     const parsed = new URL(url);
     // Extract path from any absolute URL (backend or external)
@@ -41,13 +41,13 @@ function normalizeMenuUrl(url?: string) {
 
 export default async function Footer() {
   const currentYear = new Date().getFullYear();
-  
+
   // Fetch menu 108 for Categories
   let categoryLinks: Array<{ label: string; href: string }> = [];
   try {
     const menu = await getMenu(108);
     const menuTree = buildMenuTree(menu.items || []);
-    
+
     // Get top-level menu items for footer
     categoryLinks = menuTree.map((item) => ({
       label: decodeHtmlEntities(item.title || ''),
@@ -67,8 +67,7 @@ export default async function Footer() {
               PurOstill
             </Link>
             <p>
-              Premium water distillation systems designed in Britain for clinics, hospitality brands,
-              and homes that put water first.
+              Premium Water Purification Products | Trusted by UK clinics, hospitality, and homes that put pure water first.
             </p>
             <div className={styles.badges}>
               <span>ISO 9001</span>

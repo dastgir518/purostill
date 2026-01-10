@@ -22,44 +22,40 @@ async function getProduct(slug: string) {
   }
 }
 
-import { getProductSeo, SeoData } from '@/lib/graphql';
 
+import { getPostSeo } from '@/lib/public-api';
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const seoData: SeoData = await getProductSeo(params.slug);
-  console.log(`[SEO] Fetching metadata for product: ${params.slug}`, JSON.stringify(seoData, null, 2));
+  // Fetch SEO data
+  const seoData = await getPostSeo('product', params.slug).catch(() => null);
 
-  if (seoData) {
+  if (seoData?.seo_meta) {
     return {
-      title: seoData.title,
-      description: seoData.metaDesc,
+      title: seoData.seo_meta.meta_title,
+      description: seoData.seo_meta.meta_description,
       openGraph: {
-        title: seoData.opengraphTitle || seoData.title,
-        description: seoData.opengraphDescription || seoData.metaDesc,
-        images: seoData.opengraphImage ? [{ url: seoData.opengraphImage.sourceUrl }] : [],
-        url: seoData.canonical,
+        title: seoData.seo_meta.meta_title,
+        description: seoData.seo_meta.meta_description,
+        images: seoData.seo_meta.og_image ? [{ url: seoData.seo_meta.og_image }] : undefined,
       },
-      twitter: {
-        card: 'summary_large_image',
-        title: seoData.twitterTitle || seoData.title,
-        description: seoData.twitterDescription || seoData.metaDesc,
-        images: seoData.twitterImage ? [seoData.twitterImage.sourceUrl] : [],
-      },
-      alternates: {
-        canonical: seoData.canonical,
-      },
+      robots: {
+        index: !seoData.seo_meta.noindex,
+        follow: true,
+      }
     };
   }
 
-  // Fallback to simpler metadata if GraphQL fails (or product not found in graph)
+  // Fallback to simpler metadata if API fails
   return {
     title: `Product - ${params.slug}`,
   };
 }
 
 export default async function ProductPage({ params }: { params: { slug: string } }) {
-  const product = await getProduct(params.slug);
-  const seoData: SeoData = await getProductSeo(params.slug);
+  const [product, seoData] = await Promise.all([
+    getProduct(params.slug),
+    getPostSeo('product', params.slug).catch(() => null),
+  ]);
 
   if (!product) {
     return (
@@ -71,10 +67,10 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
   return (
     <>
-      {seoData?.schema?.raw && (
+      {seoData?.schema && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: seoData.schema.raw }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(seoData.schema) }}
         />
       )}
       <ProductPageClient initialProduct={product} slug={params.slug} />

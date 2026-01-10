@@ -60,6 +60,10 @@ export default function CheckoutPage() {
   const [selectedShipping, setSelectedShipping] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponMessage, setCouponMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [countryOptions, setCountryOptions] = useState<Array<{ code: string; label: string }>>(COUNTRY_OPTIONS_STATIC);
 
   const activeShippingCountry = useMemo(() => {
@@ -93,11 +97,11 @@ export default function CheckoutPage() {
 
       const WOOCOMMERCE_URL =
         process.env.NEXT_PUBLIC_WOOCOMMERCE_URL || process.env.WOOCOMMERCE_URL || '';
-      
+
       if (!WOOCOMMERCE_URL) {
         throw new Error('WooCommerce URL is not configured.');
       }
-      
+
       // Add cache-busting parameter to ensure fresh data
       const cacheBuster = new Date().getTime();
       const response = await fetch(`${WOOCOMMERCE_URL}/wp-json/custom/v1/shipping-methods?t=${cacheBuster}`, {
@@ -132,7 +136,7 @@ export default function CheckoutPage() {
           if (cleanDescription) {
             cleanDescription = cleanDescription.replace(/<[^>]*>/g, '').trim();
           }
-          
+
           return {
             id: method.id,
             label: method.label || method.title || method.id,
@@ -207,10 +211,10 @@ export default function CheckoutPage() {
       }
     } catch (err: any) {
       console.error('Error fetching shipping methods:', err);
-      
+
       // Provide more specific error messages
       let errorMessage = 'Failed to load shipping methods.';
-      
+
       if (err.message) {
         errorMessage = err.message;
       } else if (err.name === 'TypeError' && err.message?.includes('fetch')) {
@@ -219,7 +223,7 @@ export default function CheckoutPage() {
         // Don't show error for aborted requests
         return;
       }
-      
+
       setShippingError(errorMessage);
     } finally {
       setShippingLoading(false);
@@ -263,7 +267,8 @@ export default function CheckoutPage() {
   }, [selectedShipping, shippingOptions]);
 
   const shippingCost = shippingOption ? parseFloat(shippingOption.amount || '0') : 0;
-  const grandTotal = subtotal + shippingCost;
+  const discountAmount = appliedCoupon ? appliedCoupon.discount : 0;
+  const grandTotal = Math.max(0, subtotal + shippingCost - discountAmount);
 
   const handleInputChange = (
     form: 'billing' | 'shipping',
@@ -329,6 +334,62 @@ export default function CheckoutPage() {
     return true;
   };
 
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponMessage({ type: 'error', text: 'Please enter a coupon code.' });
+      return;
+    }
+
+    setCouponLoading(true);
+    setCouponMessage(null);
+
+    try {
+      const WOOCOMMERCE_URL =
+        process.env.NEXT_PUBLIC_WOOCOMMERCE_URL || process.env.WOOCOMMERCE_URL || '';
+
+      const response = await fetch(`${WOOCOMMERCE_URL}/wp-json/custom/v1/apply-coupon`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          coupon_code: couponCode,
+          cart_total: subtotal,
+          cart_items: cartItems.map(item => ({
+            product_id: item.id,
+            quantity: item.quantity,
+            variation_id: 0,
+            line_subtotal: parseFloat(item.price || '0') * item.quantity
+          }))
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Invalid coupon code.');
+      }
+
+      setAppliedCoupon({
+        code: data.data.code,
+        discount: parseFloat(data.data.discount_amount),
+      });
+      setCouponMessage({ type: 'success', text: 'Coupon applied successfully!' });
+    } catch (err: any) {
+      setAppliedCoupon(null);
+      setCouponMessage({ type: 'error', text: err.message || 'Failed to apply coupon.' });
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+    setCouponMessage(null);
+  };
+
   const handlePlaceOrder = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
@@ -348,18 +409,19 @@ export default function CheckoutPage() {
         shipping: shippingSameAsBilling ? billing : shipping,
         shippingSameAsBilling,
         shippingOption,
+        coupon_code: appliedCoupon ? appliedCoupon.code : undefined,
       };
 
       const WOOCOMMERCE_URL =
         process.env.NEXT_PUBLIC_WOOCOMMERCE_URL || process.env.WOOCOMMERCE_URL || '';
-      
+
       let response;
       let result;
-      
+
       try {
         console.log('Sending checkout request to:', `${WOOCOMMERCE_URL}/wp-json/custom/v1/checkout`);
         console.log('Payload:', payload);
-        
+
         response = await fetch(`${WOOCOMMERCE_URL}/wp-json/custom/v1/checkout`, {
           method: 'POST',
           headers: {
@@ -368,14 +430,14 @@ export default function CheckoutPage() {
           },
           body: JSON.stringify(payload),
         });
-        
+
         console.log('Response status:', response.status);
         console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-        
+
         // Check if response is ok before parsing JSON
         const text = await response.text();
         console.log('Response text:', text.substring(0, 500));
-        
+
         try {
           result = JSON.parse(text);
           console.log('Parsed result:', result);
@@ -386,10 +448,10 @@ export default function CheckoutPage() {
       } catch (fetchError: any) {
         console.error('Fetch error:', fetchError);
         // Network error or CORS error
-        if (fetchError.message.includes('Failed to fetch') || 
-            fetchError.message.includes('CORS') ||
-            fetchError.message.includes('NetworkError') ||
-            fetchError.name === 'TypeError') {
+        if (fetchError.message.includes('Failed to fetch') ||
+          fetchError.message.includes('CORS') ||
+          fetchError.message.includes('NetworkError') ||
+          fetchError.name === 'TypeError') {
           throw new Error('Network error: Unable to connect to server. Please check your connection and try again. If the problem persists, check browser console for details.');
         }
         throw fetchError;
@@ -677,7 +739,7 @@ export default function CheckoutPage() {
                         </span>
                         <strong>&nbsp;{currencyFormatter.format(parseFloat(option.amount || '0'))}</strong>
                       </div>
-            
+
                     </div>
                   </label>
                 ))}
@@ -721,11 +783,61 @@ export default function CheckoutPage() {
                   </span>
                   <strong>{currencyFormatter.format(shippingCost)}</strong>
                 </div>
+
+                {appliedCoupon && (
+                  <div className={styles.discountRow}>
+                    <span>Discount ({appliedCoupon.code})</span>
+                    <div className={styles.discountRight}>
+                      <strong>-{currencyFormatter.format(discountAmount)}</strong>
+                      <button
+                        type="button"
+                        onClick={removeCoupon}
+                        className={styles.removeCouponBtn}
+                        aria-label="Remove coupon"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className={styles.summaryGrandTotal}>
                   <span>Total</span>
                   <strong>{currencyFormatter.format(grandTotal)}</strong>
                 </div>
               </div>
+
+              {!appliedCoupon && (
+                <div className={styles.couponSection}>
+                  <div className={styles.couponInputGroup}>
+                    <input
+                      type="text"
+                      placeholder="Coupon Code"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      disabled={couponLoading}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          applyCoupon();
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={applyCoupon}
+                      disabled={couponLoading || !couponCode.trim()}
+                    >
+                      {couponLoading ? '...' : 'Apply'}
+                    </button>
+                  </div>
+                  {couponMessage && (
+                    <div className={`${styles.couponMessage} ${styles[couponMessage.type]}`}>
+                      {couponMessage.text}
+                    </div>
+                  )}
+                </div>
+              )}
               <div className={styles.paymentNote}>
                 <p>
                   Once you place the order you will be redirected to our secure Payment payment

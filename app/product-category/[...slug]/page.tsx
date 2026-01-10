@@ -51,33 +51,27 @@ async function getCategoryData(slug: string) {
   }
 }
 
-import { getCategorySeo, SeoData } from '@/lib/graphql';
+import { getTermSeo } from '@/lib/public-api';
 
 export async function generateMetadata({ params }: { params: { slug: string[] } }): Promise<Metadata> {
   // Handle nested slugs, e.g., ['filters', 'carbon-filters'] -> 'carbon-filters'
   const slug = params.slug[params.slug.length - 1];
-  const seoData: SeoData = await getCategorySeo(slug);
-  console.log(`[SEO] Fetching metadata for category: ${slug}`, JSON.stringify(seoData, null, 2));
 
-  if (seoData) {
+  const seoData = await getTermSeo('product_cat', slug).catch(() => null);
+
+  if (seoData?.seo_meta) {
     return {
-      title: seoData.title,
-      description: seoData.metaDesc,
+      title: seoData.seo_meta.meta_title,
+      description: seoData.seo_meta.meta_description,
       openGraph: {
-        title: seoData.opengraphTitle || seoData.title,
-        description: seoData.opengraphDescription || seoData.metaDesc,
-        images: seoData.opengraphImage ? [{ url: seoData.opengraphImage.sourceUrl }] : [],
-        url: seoData.canonical,
+        title: seoData.seo_meta.meta_title,
+        description: seoData.seo_meta.meta_description,
+        images: seoData.seo_meta.og_image ? [{ url: seoData.seo_meta.og_image }] : undefined,
       },
-      twitter: {
-        card: 'summary_large_image',
-        title: seoData.twitterTitle || seoData.title,
-        description: seoData.twitterDescription || seoData.metaDesc,
-        images: seoData.twitterImage ? [seoData.twitterImage.sourceUrl] : [],
-      },
-      alternates: {
-        canonical: seoData.canonical,
-      },
+      robots: {
+        index: !seoData.seo_meta.noindex,
+        follow: true,
+      }
     };
   }
 
@@ -87,24 +81,25 @@ export async function generateMetadata({ params }: { params: { slug: string[] } 
 }
 
 export default async function CategoryPage({ params, searchParams }: { params: { slug: string[] }, searchParams: any }) {
-  const slug = params.slug.join('/');
-  const initialData = await getCategoryData(slug);
+  const slugJoined = params.slug.join('/');
+  const slugLeaf = params.slug[params.slug.length - 1];
 
-  // For schema we need the last part of the slug which represents the current category
-  const categorySlug = params.slug[params.slug.length - 1];
-  const seoData: SeoData = await getCategorySeo(categorySlug);
+  const [initialData, seoData] = await Promise.all([
+    getCategoryData(slugJoined),
+    getTermSeo('product_cat', slugLeaf).catch(() => null),
+  ]);
 
   return (
     <>
-      {seoData?.schema?.raw && (
+      {seoData?.schema && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: seoData.schema.raw }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(seoData.schema) }}
         />
       )}
       <CategoryPageClient
         initialData={initialData}
-        slug={slug}
+        slug={slugJoined}
         initialSearchParams={searchParams}
       />
     </>

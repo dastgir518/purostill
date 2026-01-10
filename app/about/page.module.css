@@ -255,7 +255,7 @@
 
 .impactGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 1.25rem;
 }
 
@@ -357,6 +357,7 @@
 }
 
 @media (max-width: 640px) {
+
   .hero,
   .cta {
     padding: 2rem;
@@ -380,3 +381,15 @@
   }
 }
 
+a.impactCard {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+a.impactCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 35px rgba(15, 59, 79, 0.12);
+  cursor: pointer;
+}
