@@ -12,13 +12,13 @@ export async function GET() {
     try {
         // User specifically requested /sitemap.xml/
         const response = await fetch(`${cleanBackendUrl}/sitemap.xml/`, {
-            next: { revalidate: 3600 } // Cache for 1 hour
+            next: { revalidate: 3600, tags: ['sitemap'] } // Cache for 1 hour, tag for purging
         });
 
         if (!response.ok) {
             // Fallback to standard sitemap.xml if trailing slash fails
             const fallbackResponse = await fetch(`${cleanBackendUrl}/sitemap.xml`, {
-                next: { revalidate: 3600 }
+                next: { revalidate: 3600, tags: ['sitemap'] }
             });
             if (!fallbackResponse.ok) {
                 return new NextResponse('Error fetching sitemap', { status: fallbackResponse.status });
