@@ -26,8 +26,12 @@ async function getProduct(slug: string) {
 import { getPostSeo } from '@/lib/public-api';
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  // Fetch SEO data
-  const seoData = await getPostSeo('product', params.slug).catch(() => null);
+  // 1. Fetch product first to get the stable ID
+  const product = await getProduct(params.slug);
+
+  // 2. Fetch SEO data using ID if available, otherwise fallback to slug
+  const identifier = product?.id || params.slug;
+  const seoData = await getPostSeo('product', identifier).catch(() => null);
 
   if (seoData?.seo_meta) {
     return {
@@ -47,15 +51,17 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
   // Fallback to simpler metadata if API fails
   return {
-    title: `Product - ${params.slug}`,
+    title: product?.name || `Product - ${params.slug}`,
   };
 }
 
 export default async function ProductPage({ params }: { params: { slug: string } }) {
-  const [product, seoData] = await Promise.all([
-    getProduct(params.slug),
-    getPostSeo('product', params.slug).catch(() => null),
-  ]);
+  // Fetch product first (deduped by Next.js)
+  const product = await getProduct(params.slug);
+
+  // Use ID for SEO fetch if product exists
+  const identifier = product?.id || params.slug;
+  const seoData = await getPostSeo('product', identifier).catch(() => null);
 
   if (!product) {
     return (

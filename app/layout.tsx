@@ -18,12 +18,15 @@ const manrope = Manrope({
 import { getSeoSettings } from '@/lib/public-api'
 
 export async function generateMetadata(): Promise<Metadata> {
-  const settings = await getSeoSettings().catch(() => null);
+  const [seoSettings, mainSettings] = await Promise.all([
+    getSeoSettings().catch(() => null),
+    getSettings().catch(() => null)
+  ]);
 
   // Fallback if API fails
-  const siteTitle = settings?.general?.home_title || settings?.site_title || 'PurOstill - Water Distiller';
-  const siteDescription = settings?.general?.home_description || settings?.site_description || 'PurOstill Water Distiller - Pure water for you and your family';
-  const siteIcon = settings?.schema?.logo || '/favicon.ico';
+  const siteTitle = seoSettings?.general?.home_title || seoSettings?.site_title || 'PurOstill - Water Distiller';
+  const siteDescription = seoSettings?.general?.home_description || seoSettings?.site_description || 'PurOstill Water Distiller - Pure water for you and your family';
+  const siteIcon = mainSettings?.favicon || seoSettings?.schema?.logo || '/favicon.ico';
 
   return {
     title: {
@@ -35,18 +38,18 @@ export async function generateMetadata(): Promise<Metadata> {
       icon: siteIcon,
       apple: siteIcon,
     },
-    openGraph: settings?.social?.og_enabled ? {
+    openGraph: seoSettings?.social?.og_enabled ? {
       title: siteTitle,
       description: siteDescription,
       siteName: siteTitle,
-      images: settings?.schema?.logo ? [{ url: settings.schema.logo }] : [],
+      images: seoSettings?.schema?.logo ? [{ url: seoSettings.schema.logo }] : [],
       type: 'website',
     } : undefined,
-    twitter: settings?.social?.twitter_enabled ? {
+    twitter: seoSettings?.social?.twitter_enabled ? {
       card: 'summary_large_image',
       title: siteTitle,
       description: siteDescription,
-      images: settings?.schema?.logo ? [settings.schema.logo] : [],
+      images: seoSettings?.schema?.logo ? [seoSettings.schema.logo] : [],
     } : undefined,
     other: {
       'application-name': 'PurOstill',
