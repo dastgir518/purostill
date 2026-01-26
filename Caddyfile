@@ -12,7 +12,7 @@ www.purostill.com {
     encode zstd gzip
 }
 
-n8n.biolechealth.com {
+n8n.biolecmobility.com {
     reverse_proxy n8n:5678
     encode zstd gzip
 }
