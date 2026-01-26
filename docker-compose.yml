@@ -1,3 +1,4 @@
+version: "3.8"
 
 services:
   purostill-frontend:
@@ -9,15 +10,35 @@ services:
         WORDPRESS_GRAPHQL_URL: https://backend-ps.purostill.com/graphql
         WOOCOMMERCE_URL: https://backend-ps.purostill.com
     restart: always
-    ports:
-      - "3000:3000"
     environment:
       - NODE_ENV=production
       - WORDPRESS_GRAPHQL_URL=https://backend-ps.purostill.com/graphql
       - PORT=3000
       - HOSTNAME=0.0.0.0
+    expose:
+      - "3000"
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - N8N_HOST=n8n.biolechealth.com
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - WEBHOOK_URL=https://n8n.biolechealth.com/
+      - GENERIC_TIMEZONE=Asia/Karachi
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=strongpassword
+    volumes:
+      - n8n_data:/home/node/.n8n
+    expose:
+      - "5678"
 
   caddy:
+    container_name: caddy
     build:
       context: .
       dockerfile: Dockerfile.caddy
@@ -30,7 +51,9 @@ services:
       - caddy_config:/config
     depends_on:
       - purostill-frontend
+      - n8n
 
 volumes:
   caddy_data:
   caddy_config:
+  n8n_data:

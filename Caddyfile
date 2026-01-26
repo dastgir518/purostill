@@ -11,3 +11,8 @@ www.purostill.com {
     reverse_proxy purostill-frontend:3000
     encode zstd gzip
 }
+
+n8n.biolechealth.com {
+    reverse_proxy n8n:5678
+    encode zstd gzip
+}
