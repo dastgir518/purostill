@@ -9,6 +9,17 @@ import { decodeHtmlEntities } from '@/lib/utils';
 
 import InlineCheckout from '@/components/Checkout/InlineCheckout';
 
+interface Variation {
+    id: number;
+    attributes: Array<{ name: string; value: string }>;
+    price: string;
+    regular_price: string;
+    sale_price: string;
+    on_sale: boolean;
+    stock_status: string;
+    image?: { src: string; alt: string; id: number };
+}
+
 interface Product {
     id: number;
     name: string;
@@ -29,6 +40,7 @@ interface Product {
         options: string[];
         visible: boolean;
     }>;
+    variations?: Variation[];
     [key: string]: any;
 }
 
@@ -113,6 +125,33 @@ function mapStoreApiProduct(storeProduct: any): Product {
         };
     }).filter((attr: any) => attr.name && attr.options.length > 0); // Only include attributes with name and options
 
+    // Map variations if present
+    const mappedVariations = (Array.isArray(storeProduct.variations) ? storeProduct.variations : [])
+        .filter((v: any) => typeof v === 'object')
+        .map((v: any) => {
+            const vPrice = v.prices?.price || v.price || '0';
+            const vRegularPrice = v.prices?.regular_price || v.regular_price || vPrice;
+            const vSalePrice = v.prices?.sale_price || v.sale_price || '';
+
+            return {
+                id: v.id,
+                attributes: Array.isArray(v.attributes) ? v.attributes.map((a: any) => ({
+                    name: decodeHtmlEntities(a.name),
+                    value: decodeHtmlEntities(a.value || a.option)
+                })) : [],
+                price: extractPriceValue(vPrice),
+                regular_price: extractPriceValue(vRegularPrice),
+                sale_price: vSalePrice ? extractPriceValue(vSalePrice) : '',
+                on_sale: v.on_sale || false,
+                stock_status: v.is_in_stock ? 'instock' : 'outofstock',
+                image: v.image ? {
+                    src: v.image.src,
+                    alt: decodeHtmlEntities(v.image.alt || ''),
+                    id: v.image.id
+                } : undefined
+            };
+        });
+
     return {
         id: storeProduct.id,
         name: decodeHtmlEntities(storeProduct.name || ''),
@@ -134,6 +173,7 @@ function mapStoreApiProduct(storeProduct: any): Product {
         description: storeProduct.description || '',
         featured: storeProduct.featured || false,
         attributes: mappedAttributes,
+        variations: mappedVariations,
     };
 }
 
@@ -149,6 +189,99 @@ export default function ProductPageClient({ initialProduct, slug: initialSlug }:
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [quantity, setQuantity] = useState(1);
     const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'reviews'>('description');
+
+    // Variation State
+    const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>({});
+    const [currentVariation, setCurrentVariation] = useState<Variation | null>(null);
+
+    // Initialize defaults if only 1 option or auto-select
+    useEffect(() => {
+        if (product?.variations && product.variations.length > 0 && Object.keys(selectedAttributes).length === 0) {
+            // Optional: Pre-select first variation? Or leave empty.
+            // Let's leave empty to force user selection unless we want default.
+        }
+    }, [product]);
+
+    // Fetch detailed variation data (prices) if missing
+    useEffect(() => {
+        const fetchDetailedVariations = async () => {
+            // Only run if we have variations but they look incomplete (e.g. missing price or price is 0)
+            if (!product?.variations || product.variations.length === 0) return;
+
+            try {
+                // Check if we suspect missing data. If we just mapped from Store API list, prices might be '0'.
+                // We'll trust the check inside the map to filter/update.
+
+                const WOOCOMMERCE_URL = process.env.NEXT_PUBLIC_WOOCOMMERCE_URL || process.env.WOOCOMMERCE_URL || '';
+
+                const updatedVariations = await Promise.all(product.variations.map(async (v) => {
+                    // Optimized: if we have a seemingly valid price, skip.
+                    // If price is '0', '0.00' or empty, we must fetch details.
+                    if (v.price && v.price !== '0' && v.price !== '0.00' && v.price !== '') return v;
+
+                    try {
+                        const res = await fetch(`${WOOCOMMERCE_URL}/wp-json/wc/store/v1/products/${v.id}`);
+                        if (res.ok) {
+                            const details = await res.json();
+                            const vPrice = details.prices?.price || details.price || '0';
+                            const vRegularPrice = details.prices?.regular_price || details.regular_price || vPrice;
+                            const vSalePrice = details.prices?.sale_price || details.sale_price || '';
+
+                            return {
+                                ...v,
+                                price: extractPriceValue(vPrice),
+                                regular_price: extractPriceValue(vRegularPrice),
+                                sale_price: vSalePrice ? extractPriceValue(vSalePrice) : '',
+                                on_sale: details.on_sale || false,
+                                stock_status: details.is_in_stock ? 'instock' : 'outofstock',
+                                image: details.images?.[0] ? {
+                                    src: details.images[0].src,
+                                    alt: details.images[0].alt || '',
+                                    id: details.images[0].id
+                                } : v.image
+                            };
+                        }
+                    } catch (e) {
+                        console.error(`Failed to fetch variation ${v.id}`, e);
+                    }
+                    return v;
+                }));
+
+                // Only update if something changed
+                // Simple check: compare JSON or just set it. React handles shallow diffs but deep object ref change triggers re-render.
+                setProduct(prev => prev ? ({ ...prev, variations: updatedVariations }) : null);
+
+            } catch (e) {
+                console.error("Error fetching variation details", e);
+            }
+        };
+
+        fetchDetailedVariations();
+
+    }, [product?.id]); // Run when product ID changes
+
+    // Update current variation based on selection
+    useEffect(() => {
+        if (!product?.variations || product.variations.length === 0) {
+            setCurrentVariation(null);
+            return;
+        }
+
+        const match = product.variations.find(v =>
+            v.attributes.every(a => selectedAttributes[a.name] === a.value)
+        );
+
+        if (match) {
+            setCurrentVariation(match);
+            // Optionally update main image
+            if (match.image) {
+                const imgIndex = product.images.findIndex(img => img.src === match.image?.src);
+                if (imgIndex !== -1) setSelectedImageIndex(imgIndex);
+            }
+        } else {
+            setCurrentVariation(null);
+        }
+    }, [selectedAttributes, product]);
 
     // Update slug and product when pathname changes (if navigating between products)
     useEffect(() => {
@@ -174,10 +307,11 @@ export default function ProductPageClient({ initialProduct, slug: initialSlug }:
     }, [slug]);
 
     useEffect(() => {
-        if (product && activeTab === 'reviews') {
+        if (product) {
             fetchReviews();
         }
-    }, [product, activeTab]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [product?.id]); // Only refetch if product ID changes
 
     const fetchProduct = async () => {
         if (!slug) {
@@ -243,12 +377,39 @@ export default function ProductPageClient({ initialProduct, slug: initialSlug }:
             setReviewsLoading(true);
             const WOOCOMMERCE_URL =
                 process.env.NEXT_PUBLIC_WOOCOMMERCE_URL || process.env.WOOCOMMERCE_URL || '';
-            // Use WooCommerce Store API to get product reviews
-            const response = await fetch(`${WOOCOMMERCE_URL}/wp-json/wc/store/v1/products/${product.id}/reviews`);
+            // Use custom endpoint to get product reviews
+            const response = await fetch(`${WOOCOMMERCE_URL}/wp-json/custom/v1/reviews?product_id=${product.id}`);
+
+            if (!response.ok) {
+                console.warn(`Custom reviews endpoint failed: ${response.status}`);
+                // Fallback to standard endpoint or empty
+                setReviews([]);
+                return;
+            }
+
             const reviews = await response.json();
 
             if (Array.isArray(reviews)) {
                 setReviews(reviews);
+
+                // Calculate and update product rating/count based on actual reviews
+                if (reviews.length > 0) {
+                    const totalRating = reviews.reduce((acc: number, review: any) => acc + (parseFloat(review.rating) || 0), 0);
+                    const avgRating = (totalRating / reviews.length).toFixed(2);
+
+                    setProduct(prev => prev ? ({
+                        ...prev,
+                        rating_count: reviews.length,
+                        average_rating: avgRating
+                    }) : null);
+                } else {
+                    setProduct(prev => prev ? ({
+                        ...prev,
+                        rating_count: 0,
+                        average_rating: '0'
+                    }) : null);
+                }
+
             } else {
                 setReviews([]);
             }
@@ -267,14 +428,29 @@ export default function ProductPageClient({ initialProduct, slug: initialSlug }:
     const handleAddToCart = () => {
         if (!product) return;
 
+        // Validation for variable products
+        if (product.variations && product.variations.length > 0 && !currentVariation) {
+            // Optional: Shake animation or error message
+            return;
+        }
+
         const { addToCart } = require('@/lib/cart');
-        const mainImage = product.images?.[0]?.src || '';
+
+        // Determine item data based on variation or simple product
+        const id = currentVariation ? currentVariation.id : product.id;
+        const price = currentVariation
+            ? (currentVariation.price || currentVariation.sale_price || currentVariation.regular_price || '0.00')
+            : (product.price || product.sale_price || product.regular_price || '0.00');
+        const image = currentVariation?.image?.src || product.images?.[0]?.src || '';
+        const name = currentVariation
+            ? `${product.name} - ${currentVariation.attributes.map(a => a.value).join(', ')}`
+            : product.name;
 
         addToCart({
-            id: product.id,
-            name: product.name,
-            price: product.price || product.sale_price || product.regular_price || '0.00',
-            image: mainImage,
+            id,
+            name,
+            price,
+            image,
             slug: product.slug,
         }, quantity);
     };
@@ -294,14 +470,29 @@ export default function ProductPageClient({ initialProduct, slug: initialSlug }:
         );
     }
 
-    const mainImage = product.images?.[selectedImageIndex] || product.images?.[0];
-    const rating = parseFloat(product.average_rating || '0');
-    const discountPercent = product.on_sale && product.regular_price
-        ? Math.round(((parseFloat(product.regular_price) - parseFloat(product.price)) / parseFloat(product.regular_price)) * 100)
+    const mainImage = currentVariation?.image
+        ? currentVariation.image
+        : (product.images?.[selectedImageIndex] || product.images?.[0]);
+
+    const activePrice = currentVariation
+        ? (currentVariation.price || currentVariation.sale_price || currentVariation.regular_price || '0.00')
+        : (product.price || product.sale_price || product.regular_price || '0.00');
+
+    const activeRegularPrice = currentVariation
+        ? (currentVariation.regular_price || activePrice)
+        : (product.regular_price || activePrice);
+
+    const isOnSale = currentVariation ? currentVariation.on_sale : product.on_sale;
+
+    const discountPercent = isOnSale && activeRegularPrice
+        ? Math.round(((parseFloat(activeRegularPrice) - parseFloat(activePrice)) / parseFloat(activeRegularPrice)) * 100)
         : 0;
-    const savings = product.on_sale && product.regular_price
-        ? (parseFloat(product.regular_price) - parseFloat(product.price)).toFixed(2)
+
+    const savings = isOnSale && activeRegularPrice
+        ? (parseFloat(activeRegularPrice) - parseFloat(activePrice)).toFixed(2)
         : '0.00';
+
+    const rating = parseFloat(product.average_rating || '0');
 
     const renderStars = (ratingValue?: number) => {
         const stars = ratingValue !== undefined ? ratingValue : rating;
@@ -359,7 +550,7 @@ export default function ProductPageClient({ initialProduct, slug: initialSlug }:
                 {/* Left Side - Product Images */}
                 <div className={styles.imageSection}>
                     <div className={styles.mainImageContainer}>
-                        {product.on_sale && discountPercent > 0 && (
+                        {isOnSale && discountPercent > 0 && (
                             <span className={styles.discountBadge}>{discountPercent}% OFF</span>
                         )}
                         {product.featured && (
@@ -411,13 +602,13 @@ export default function ProductPageClient({ initialProduct, slug: initialSlug }:
                     <div className={styles.pricingSection}>
                         <div className={styles.priceContainer}>
                             <span className={styles.currentPrice}>
-                                £{product.price || product.sale_price || product.regular_price || '0.00'}
+                                £{activePrice}
                             </span>
-                            {product.on_sale && product.regular_price && (
-                                <span className={styles.originalPrice}>£{product.regular_price}</span>
+                            {isOnSale && activeRegularPrice && (
+                                <span className={styles.originalPrice}>£{activeRegularPrice}</span>
                             )}
                         </div>
-                        {product.on_sale && discountPercent > 0 && (
+                        {isOnSale && discountPercent > 0 && (
                             <div className={styles.savingsContainer}>
                                 <span className={styles.savingsBadge}>Save £{savings}</span>
                                 <span className={styles.savingsText}>
@@ -433,6 +624,46 @@ export default function ProductPageClient({ initialProduct, slug: initialSlug }:
                             className={styles.shortDescription}
                             dangerouslySetInnerHTML={{ __html: product.short_description }}
                         />
+                    )}
+
+                    {/* Variation Selectors */}
+                    {product.variations && product.variations.length > 0 && product.attributes && (
+                        <div className={styles.variationSection}>
+                            {product.attributes
+                                .filter(attr => {
+                                    if (!attr.visible || attr.options.length === 0) return false;
+
+                                    // Filter based on actual usage in variations
+                                    // Check if any variation uses this attribute
+                                    const isUsedInVariations = product.variations?.some(v =>
+                                        v.attributes.some(a => a.name === attr.name)
+                                    );
+
+                                    return isUsedInVariations;
+                                })
+                                .map((attr, index) => (
+                                    <div key={attr.id || index} className={styles.attributeGroup}>
+                                        <label htmlFor={`attr-${attr.name}`} className={styles.attributeLabel}>
+                                            {attr.name}
+                                        </label>
+                                        <div className={styles.attributeSelectContainer}>
+                                            <select
+                                                id={`attr-${attr.name}`}
+                                                className={styles.attributeSelect}
+                                                value={selectedAttributes[attr.name] || ''}
+                                                onChange={(e) => setSelectedAttributes(prev => ({ ...prev, [attr.name]: e.target.value }))}
+                                            >
+                                                <option value="" disabled>Choose an option</option>
+                                                {attr.options.map((option) => (
+                                                    <option key={option} value={option}>
+                                                        {option}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                ))}
+                        </div>
                     )}
 
                     {/* Quantity and Add to Cart */}
@@ -462,19 +693,25 @@ export default function ProductPageClient({ initialProduct, slug: initialSlug }:
                         <button
                             className={styles.addToCartButton}
                             onClick={handleAddToCart}
+                            disabled={product.variations && product.variations.length > 0 && !currentVariation}
+                            style={{ opacity: (product.variations && product.variations.length > 0 && !currentVariation) ? 0.6 : 1, cursor: (product.variations && product.variations.length > 0 && !currentVariation) ? 'not-allowed' : 'pointer' }}
                         >
-                            Add to Cart
+                            {product.variations && product.variations.length > 0 && !currentVariation
+                                ? 'Select Options'
+                                : 'Add to Cart'}
                         </button>
 
                     </div>
 
                     {/* Inline Express Checkout (Google Pay / Apple Pay) */}
-                    <div className={styles.expressCheckoutSection}>
-                        <InlineCheckout
-                            amount={(parseFloat(product.price || product.sale_price || product.regular_price || '0') * quantity)}
-                            currency="GBP"
-                        />
-                    </div>
+                    {(parseFloat(activePrice) * quantity) > 0 && (
+                        <div className={styles.expressCheckoutSection}>
+                            <InlineCheckout
+                                amount={(parseFloat(activePrice) * quantity)}
+                                currency="GBP"
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
 

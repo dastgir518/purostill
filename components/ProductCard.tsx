@@ -28,8 +28,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const imageUrl = product.images?.[0]?.src || '/placeholder-product.jpg';
-  const rating = parseFloat(product.average_rating || '0');
-  const reviewCount = product.rating_count || 0;
+
   const discountPercent = product.on_sale && product.regular_price
     ? Math.round(((parseFloat(product.regular_price) - parseFloat(product.price)) / parseFloat(product.regular_price)) * 100)
     : 0;
@@ -37,7 +36,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   // Extract specifications from attributes or meta_data
   const getSpecs = () => {
     const specs: string[] = [];
-    
+
     // Try to get from attributes
     product.attributes?.forEach((attr: any) => {
       if (attr.name && attr.options && attr.options.length > 0) {
@@ -59,30 +58,14 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   const specs = getSpecs();
 
-  const renderStars = () => {
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
-    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
 
-    return (
-      <div className={styles.rating}>
-        {Array.from({ length: fullStars }).map((_, i) => (
-          <span key={i} className={styles.starFull}>★</span>
-        ))}
-        {hasHalfStar && <span className={styles.starHalf}>★</span>}
-        {Array.from({ length: emptyStars }).map((_, i) => (
-          <span key={i} className={styles.starEmpty}>☆</span>
-        ))}
-      </div>
-    );
-  };
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     const imageUrl = product.images?.[0]?.src || '/placeholder-product.jpg';
-    
+
     addToCart({
       id: product.id,
       name: product.name,
@@ -107,7 +90,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
         <div className={styles.productInfo}>
           <h3 className={styles.productTitle}>{product.name}</h3>
-          
+
           {specs.length > 0 && (
             <div className={styles.specs}>
               {specs.map((spec, index) => (
@@ -116,10 +99,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             </div>
           )}
 
-          <div className={styles.ratingContainer}>
-            {renderStars()}
-            <span className={styles.reviewCount}>({reviewCount} reviews)</span>
-          </div>
+
 
           <div className={styles.priceContainer}>
             {product.on_sale && product.regular_price ? (

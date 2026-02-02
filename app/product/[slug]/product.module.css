@@ -894,3 +894,58 @@
     width: 100%;
   }
 }
+
+/* Variation Selectors */
+.variationSection {
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.attributeGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.attributeLabel {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2c3e50;
+  display: flex;
+  justify-content: space-between;
+}
+
+.attributeSelectContainer {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+}
+
+.attributeSelect {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  font-size: 1rem;
+  color: #2c3e50;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233498db' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.attributeSelect:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.attributeSelect:hover {
+  border-color: #bdc3c7;
+}

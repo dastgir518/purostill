@@ -117,39 +117,7 @@ function mapProductToCard(product: Product): CardProduct | null {
   };
 }
 
-function StarRating({ rating, reviews }: { rating: number; reviews: string }) {
-  const fullStars = Math.floor(rating);
-  const hasHalf = rating % 1 >= 0.5;
 
-  return (
-    <div className={styles.ratingRow}>
-      {Array.from({ length: 5 }).map((_, index) => {
-        if (index < fullStars) {
-          return (
-            <span key={index} className={styles.star}>
-              ★
-            </span>
-          );
-        }
-
-        if (index === fullStars && hasHalf) {
-          return (
-            <span key={index} className={`${styles.star} ${styles.starHalf}`}>
-              ★
-            </span>
-          );
-        }
-
-        return (
-          <span key={index} className={`${styles.star} ${styles.starEmpty}`}>
-            ☆
-          </span>
-        );
-      })}
-      <span className={styles.reviewCount}>({reviews})</span>
-    </div>
-  );
-}
 
 export default function BestsellersSection({ initialProducts = [] }: { initialProducts?: any[] }) {
   const [bestsellers, setBestsellers] = useState<CardProduct[]>(() =>
@@ -206,7 +174,7 @@ export default function BestsellersSection({ initialProducts = [] }: { initialPr
               </div>
               <div className={styles.bestsellerContent}>
                 <h3>{product.title}</h3>
-                <StarRating rating={product.rating} reviews={product.reviews} />
+
                 <p className={styles.productPrice}>
                   <span className={styles.currency}>{product.price.currency}</span>
                   {product.price.amount}
