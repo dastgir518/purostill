@@ -830,8 +830,8 @@ export default function ProductPageClient({ initialProduct, slug: initialSlug }:
                                     {reviews.map((review) => (
                                         <div key={review.id} className={styles.reviewItem}>
                                             <div className={styles.reviewHeader}>
-                                                <div>
-                                                    <strong>{review.reviewer}</strong>
+                                                <div className={styles.reviewerInfo}>
+                                                    <strong className={styles.reviewerName}>{review.reviewer || 'Anonymous'}</strong>
                                                     {review.verified && (
                                                         <span className={styles.verifiedBadge}>Verified Purchase</span>
                                                     )}
