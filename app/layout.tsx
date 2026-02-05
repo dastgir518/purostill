@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Manrope } from 'next/font/google'
 import './globals.css'
+import { GoogleAnalytics } from '@next/third-parties/google'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import ToastProvider from '@/components/ToastProvider'
@@ -106,6 +107,7 @@ export default async function RootLayout({
         {children}
         <Footer />
         <ToastProvider />
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID || ''} />
       </body>
     </html>
   )

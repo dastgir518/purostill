@@ -11,6 +11,7 @@
     "export": "next export"
   },
   "dependencies": {
+    "@next/third-parties": "^14.2.35",
     "@stripe/react-stripe-js": "^5.4.1",
     "@stripe/stripe-js": "^8.6.0",
     "axios": "^1.6.2",

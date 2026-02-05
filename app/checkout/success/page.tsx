@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { sendGAEvent } from '@next/third-parties/google';
 import getStripe from '@/lib/stripe';
 import styles from './success.module.css';
 
@@ -28,6 +29,27 @@ export default function SuccessPage() {
 
                 switch (paymentIntent.status) {
                     case 'succeeded':
+                        const { getCartItems, clearCart } = require('@/lib/cart');
+                        const cartItems = getCartItems();
+
+                        // Send purchase event
+                        // Only send if we haven't already (simple check to prevent double counting on re-renders, 
+                        // though strict mode might still fire twice in dev, usually fine in prod)
+                        if (status !== 'succeeded') {
+                            sendGAEvent('event', 'purchase', {
+                                transaction_id: paymentIntent.id,
+                                value: paymentIntent.amount / 100,
+                                currency: paymentIntent.currency.toUpperCase(),
+                                items: cartItems.map((item: any) => ({
+                                    item_id: item.id,
+                                    item_name: item.name,
+                                    price: parseFloat(item.price || '0'),
+                                    quantity: item.quantity
+                                }))
+                            });
+                            clearCart();
+                        }
+
                         setStatus('succeeded');
                         break;
                     case 'processing':

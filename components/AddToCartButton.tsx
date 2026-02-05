@@ -2,6 +2,7 @@
 
 import { MouseEvent } from 'react';
 import { addToCart } from '@/lib/cart';
+import { sendGAEvent } from '@next/third-parties/google';
 
 type AddToCartButtonProps = {
   product: {
@@ -24,6 +25,17 @@ export default function AddToCartButton({ product, className }: AddToCartButtonP
       price: product.price,
       image: product.image,
       slug: product.slug,
+    });
+
+    sendGAEvent('event', 'add_to_cart', {
+      currency: 'GBP',
+      value: parseFloat(product.price),
+      items: [{
+        item_id: product.id,
+        item_name: product.title,
+        price: parseFloat(product.price),
+        quantity: 1
+      }]
     });
   };
 

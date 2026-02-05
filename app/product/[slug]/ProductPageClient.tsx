@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { sendGAEvent } from '@next/third-parties/google';
 import styles from './product.module.css';
 import { SkeletonProductPage, Skeleton, SkeletonText } from '@/components/Skeleton';
 import { decodeHtmlEntities } from '@/lib/utils';
@@ -193,6 +194,21 @@ export default function ProductPageClient({ initialProduct, slug: initialSlug }:
     // Variation State
     const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>({});
     const [currentVariation, setCurrentVariation] = useState<Variation | null>(null);
+
+    // Track view_item event
+    useEffect(() => {
+        if (initialProduct) {
+            sendGAEvent('event', 'view_item', {
+                currency: 'GBP',
+                value: initialProduct.price ? parseFloat(initialProduct.price) : 0,
+                items: [{
+                    item_id: initialProduct.id,
+                    item_name: initialProduct.name,
+                    price: initialProduct.price ? parseFloat(initialProduct.price) : 0,
+                }]
+            });
+        }
+    }, [initialProduct]);
 
     // Initialize defaults if only 1 option or auto-select
     useEffect(() => {

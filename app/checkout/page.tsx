@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { sendGAEvent } from '@next/third-parties/google';
 import styles from './checkout.module.css';
 import { CartItem, getCartItems } from '@/lib/cart';
 import { showToast } from '@/components/Toast';
@@ -83,12 +84,29 @@ export default function CheckoutPage() {
     };
 
     loadCart();
+    loadCart();
     const handleCartUpdate = () => loadCart();
     window.addEventListener('cartUpdated', handleCartUpdate);
     return () => {
       window.removeEventListener('cartUpdated', handleCartUpdate);
     };
   }, []);
+
+  useEffect(() => {
+    if (cartItems.length > 0) {
+      const value = cartItems.reduce((sum, item) => sum + (parseFloat(item.price || '0') * item.quantity), 0);
+      sendGAEvent('event', 'begin_checkout', {
+        currency: 'GBP',
+        value: value,
+        items: cartItems.map(item => ({
+          item_id: item.id,
+          item_name: item.name,
+          price: parseFloat(item.price || '0'),
+          quantity: item.quantity
+        }))
+      });
+    }
+  }, [cartItems]);
 
   const fetchShippingOptions = async () => {
     try {

@@ -50,3 +50,9 @@ export function getCartCount(): number {
   return items.reduce((sum, item) => sum + item.quantity, 0);
 }
 
+
+export function clearCart() {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem('cart');
+  window.dispatchEvent(new Event('cartUpdated'));
+}
