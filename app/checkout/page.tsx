@@ -428,6 +428,7 @@ export default function CheckoutPage() {
         shippingSameAsBilling,
         shippingOption,
         coupon_code: appliedCoupon ? appliedCoupon.code : undefined,
+        returnUrl: window.location.origin + '/checkout/success'
       };
 
       const WOOCOMMERCE_URL =
