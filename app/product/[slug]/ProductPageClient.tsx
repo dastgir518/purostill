@@ -609,9 +609,6 @@ export default function ProductPageClient({ initialProduct, slug: initialSlug }:
                     <div className={styles.ratingSection}>
                         {renderStars()}
                         <span className={styles.reviewCount}>({product.rating_count || 0} reviews)</span>
-                        <Link href="#reviews" className={styles.readReviewsLink}>
-                            Read Reviews
-                        </Link>
                     </div>
 
                     {/* Pricing */}
